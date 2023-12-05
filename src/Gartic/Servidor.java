@@ -10,6 +10,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Random;
 
 /**
  *
@@ -19,12 +20,11 @@ public class Servidor {
 
     private ArrayList<Cliente> clientes = new ArrayList<>();
     private ArrayList<Cliente> acertouResposta = new ArrayList<>();
-    private ArrayList<String> dica = new ArrayList<>();
     private ArrayList<Desenho> listaPixeis = new ArrayList<>();
-    private String dicaCliente = "";
+    private ArrayList<Integer> posicoesDica = new ArrayList<>();
     private String temaTurno = "";
     private boolean jogoIniciado = false;
-    private boolean dicaOn = false;
+    private int dica = 0;
     private int turno = 0;
     private Utils utils = new Utils();
 
@@ -68,8 +68,13 @@ public class Servidor {
     private void verificaResposta(Cliente remetente, String resposta) {
         if (resposta.equalsIgnoreCase(temaTurno) && !acertouResposta.contains(remetente)) {
             String resultado = "";
-            //se a resposta esta correta, pontua o cliente            
-            remetente.setPontos(dicaOn ? remetente.getPontos() + 5 : remetente.getPontos() + 10);
+            if (dica == 0) {
+                remetente.setPontos(remetente.getPontos() + 15);
+            } else if (dica == 1) {
+                remetente.setPontos(remetente.getPontos() + 10);
+            } else if (dica >= 2) {
+                remetente.setPontos(remetente.getPontos() + 3);
+            }
             acertouResposta.add(remetente);
             if (remetente.getPontos() >= 100) {
                 resultado = "Venceu";
@@ -89,6 +94,9 @@ public class Servidor {
             //envia o comando para o remetente indicando que acertou a resposta
             enviaMsg(remetente.getSocket(), "Resposta: " + resultado);
             atualizaListaClientes();
+            if (acertouResposta.size() == clientes.size() - 1) {
+                proximoTurno();
+            }
         } else {
             //se a resposta esta incorreta, envia o conteudo da tentativa para todos clientes            
             for (Cliente c : clientes) {
@@ -114,32 +122,10 @@ public class Servidor {
                 if (jogoIniciado) {
                     proximoTurno();
                 }
-                dicaOn = false;
+                dica = 0;
                 break;
             case "Resposta":
                 verificaResposta(getClientePorSocket(clientSocket), argumento);
-                ArrayList<String> novaLista = utils.verificaPalavra(argumento, temaTurno);
-                StringBuilder sb = new StringBuilder();
-                //incremente a lista com as letras da tentativa
-                for (String item : novaLista) {
-                    if (!dica.contains(item)) {
-                        dica.add(item);
-                    }
-                }
-                //preenche string com _ nas letras desconecidas
-                for (int i = 0; i < temaTurno.length(); i++) {
-                    sb.append("_ ");
-                }
-
-                for (String item : dica) {
-                    String[] info = item.split("&");
-                    char letra = info[0].charAt(0);
-                    int posicao = Integer.parseInt(info[1]);
-
-                    //preenche a dica com as letras conhecidas
-                    sb.setCharAt(posicao * 2, letra);
-                }
-                dicaCliente = sb.toString();
                 break;
             case "Chat":
                 for (Cliente c : clientes) {
@@ -168,9 +154,39 @@ public class Servidor {
                 }
                 break;
             case "Dica":
-                dicaOn = true;
-                for (Cliente c : clientes) {
-                    enviaMsg(c.getSocket(), "Dica: " + dicaCliente);
+                dica++;
+                StringBuilder sb = new StringBuilder();
+
+                //inicializa sb com letras ja escolhidas e "_" para as nao escolhidas
+                for (int i = 0; i < temaTurno.length(); i++) {
+                    if (posicoesDica.contains(i)) {
+                        sb.append(temaTurno.charAt(i)).append(" ");
+                    } else {
+                        sb.append("_ ");
+                    }
+                }
+
+                boolean palavraCompleta = !sb.toString().contains("_");
+                if (!palavraCompleta) {
+                    Random random = new Random();
+
+                    //escolhe aleatoriamente uma posicao na palavra que ainda nao foi escolhida
+                    int posicaoSorteada;
+
+                    do {
+                        posicaoSorteada = random.nextInt(temaTurno.length());
+                    } while (posicoesDica.contains(posicaoSorteada));
+
+                    //adiciona a posicao sorteada a lista de posicoes escolhidas
+                    posicoesDica.add(posicaoSorteada);
+
+                    //obtem a letra na posicao sorteada
+                    char letraSorteada = temaTurno.charAt(posicaoSorteada);
+                    //substitui a posicao sorteada na string de "_" pela letra sorteada
+                    sb.setCharAt(posicaoSorteada * 2, letraSorteada);
+                    for (Cliente c : clientes) {
+                        enviaMsg(c.getSocket(), "Dica:" + sb.toString());
+                    }
                 }
                 break;
             default:
@@ -183,9 +199,12 @@ public class Servidor {
         String nick = argumento;
         synchronized (Servidor.class) {
             Cliente cli = new Cliente(clientSocket, nick, 0);
+
             clientes.add(cli);
+
             System.out.println("Novo cliente adicionado: " + cli.getNick());
             atualizaListaClientes();
+
             if (!listaPixeis.isEmpty()) {
                 String mensagemPixeis = "ListaPixel:";
                 for (Desenho pixel : listaPixeis) {
@@ -208,9 +227,10 @@ public class Servidor {
     private void proximoTurno() {
         turno = (turno + 1) % clientes.size();
         acertouResposta.clear();
-        dica.clear();
+        posicoesDica.clear();
         listaPixeis.clear();
-        dicaCliente = "";
+        dica = 0;
+
         //escolhe um novo tema para o turno
         temaTurno = utils.sortearPalavra();
         System.out.println("NOVO TURNO: " + turno + "TEMA ESCOLHIDO: " + temaTurno);
@@ -244,7 +264,9 @@ public class Servidor {
                 new Thread(() -> clienteThread(clientSocket)).start();
 
                 synchronized (Servidor.class) {
-                    if (!jogoIniciado && clientes.size() > 0) {
+                    if (!jogoIniciado
+                            && clientes.size()
+                            > 0) {
                         for (Cliente cliente : clientes) {
                             enviaMsg(cliente.getSocket(), "InicioJogo:");
                         }

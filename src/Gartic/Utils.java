@@ -32,20 +32,6 @@ public class Utils {
         return palavras.get(indiceSorteado);
     }
 
-    public ArrayList<String> verificaPalavra(String palavra, String tema) {
-        ArrayList<String> resultado = new ArrayList<>();
-
-        for (int i = 0; i < palavra.length(); i++) {
-            char posicaoChar = palavra.toUpperCase().charAt(i);
-            for (int j = 0; j < tema.length(); j++) {
-                if (posicaoChar == tema.charAt(j)) {
-                    resultado.add(String.format("%c&%d", posicaoChar, j));
-                }
-            }
-        }
-        return resultado;
-    }
-
     //remove acentuacao e caracteres especiais
     public String removerAcentuacao(String palavra) {
         //decompoe a string recebida para o codigo unicode no padrao NFD e a transforma em maiuscula

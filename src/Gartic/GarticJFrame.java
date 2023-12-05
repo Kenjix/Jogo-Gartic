@@ -22,7 +22,7 @@ import javax.swing.UnsupportedLookAndFeelException;
  * @author dougl
  */
 public class GarticJFrame extends javax.swing.JFrame {
-    
+
     private Point acaoMouse;
     private boolean desenhando;
     private boolean turnoDoJogador = false;
@@ -60,17 +60,17 @@ public class GarticJFrame extends javax.swing.JFrame {
         initChatListeners();
         initServerListener();
     }
-    
+
     public GarticJFrame() {
         initComponents();
     }
-    
+
     private void initServerListener() {
         Thread listenerThread = new Thread(() -> {
             try {
                 while (true) {
                     String serverMessage = in.readLine();
-                    
+
                     if (serverMessage == null) {
                         //servidor encerrou a conexao
                         break;
@@ -85,7 +85,7 @@ public class GarticJFrame extends javax.swing.JFrame {
         });
         listenerThread.start();
     }
-    
+
     private void initChatListeners() {
         jTextFieldResposta1.addActionListener((ActionEvent e) -> {
             String textoDigitado = jTextFieldResposta1.getText();
@@ -94,7 +94,7 @@ public class GarticJFrame extends javax.swing.JFrame {
                 jTextFieldResposta1.setText("");
             }
         });
-        
+
         jTextFieldChat.addActionListener((ActionEvent e) -> {
             String textoDigitado = jTextFieldChat.getText();
             if (!textoDigitado.isEmpty()) {
@@ -103,7 +103,7 @@ public class GarticJFrame extends javax.swing.JFrame {
             }
         });
     }
-    
+
     private void processaMsg(String msg) {
         String[] tokens = msg.split(":", 2); //divide a mensagem em duas partes no primeiro ":" encontrado
 
@@ -111,7 +111,7 @@ public class GarticJFrame extends javax.swing.JFrame {
             //caso a mensagem nao tenha ":" ou nao tenha conteudo apos o ":"
             return;
         }
-        
+
         String comando = tokens[0];
         String argumento = tokens[1].trim();
         String[] dadosMsg;
@@ -119,7 +119,7 @@ public class GarticJFrame extends javax.swing.JFrame {
         String[] dadosPixel;
         String[] dadosCor;
         int x1, y1, x2, y2, red, green, blue;
-        
+
         switch (comando) {
             case "AguardandoPlayers":
                 jLabelStatus.setText("Aguardando jogadores");
@@ -145,14 +145,14 @@ public class GarticJFrame extends javax.swing.JFrame {
                 jProgressBarTempo.setValue(100); //configura inicialmente para 100%
                 Timer timer = new Timer(INTERVALO_ATUALIZACAO_MILISSEGUNDOS, new ActionListener() {
                     int tempoRestante = TEMPO_TOTAL_SEGUNDOS;
-                    
+
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         int percentual = (int) ((double) tempoRestante / TEMPO_TOTAL_SEGUNDOS * 100);
                         jProgressBarTempo.setValue(percentual);
                         jLabelTempo.setForeground((tempoRestante > 30) ? Color.decode("#008000") : Color.decode("#f0be00"));
                         jLabelTempo.setText(tempoRestante + "s");
-                        
+
                         if (tempoRestante <= 0) {
                             ((Timer) e.getSource()).stop(); //para o timer quando o tempo acabar
                             jProgressBarTempo.setValue(0);
@@ -215,30 +215,30 @@ public class GarticJFrame extends javax.swing.JFrame {
                 dadosPosicao = dadosMsg[0].split("@");
                 dadosPixel = dadosPosicao[0].split(";");
                 dadosCor = dadosPosicao[1].split(";");
-                
+
                 x1 = Integer.parseInt(dadosPixel[0]);
                 y1 = Integer.parseInt(dadosPixel[1]);
                 x2 = Integer.parseInt(dadosPixel[2]);
                 y2 = Integer.parseInt(dadosPixel[3]);
-                
+
                 red = Integer.parseInt(dadosCor[0]);
                 green = Integer.parseInt(dadosCor[1]);
                 blue = Integer.parseInt(dadosCor[2]);
-                
+
                 desenhar(new Desenho(x1, y1, x2, y2, red, green, blue));
-                
+
                 break;
             case "ListaPixel":
                 dadosMsg = argumento.split(":");
                 dadosPosicao = dadosMsg[0].split("@");
                 dadosPixel = dadosPosicao[0].split(";");
                 dadosCor = dadosPosicao[1].split(";");
-                
+
                 x1 = Integer.parseInt(dadosPixel[0]);
                 y1 = Integer.parseInt(dadosPixel[1]);
                 x2 = Integer.parseInt(dadosPixel[2]);
                 y2 = Integer.parseInt(dadosPixel[3]);
-                
+
                 red = Integer.parseInt(dadosCor[0]);
                 green = Integer.parseInt(dadosCor[1]);
                 blue = Integer.parseInt(dadosCor[2]);
@@ -260,19 +260,19 @@ public class GarticJFrame extends javax.swing.JFrame {
                 break;
         }
     }
-    
+
     private void envioMsg(String msg) {
         System.out.println("ENVIANDO AO SERVER: " + msg);
         out.println(msg);
     }
-    
+
     private void desenhar(Desenho d) {
         Graphics g = jPanelDesenho.getGraphics();
         ((Graphics2D) g).setStroke(new BasicStroke(larguraLinha));
         g.setColor(new Color(d.getR(), d.getG(), d.getB()));
         g.drawLine(d.getX1(), d.getY1(), d.getX2(), d.getY2());
     }
-    
+
     private void apagarDesenho() {
         Graphics g = jPanelDesenho.getGraphics();
         //obtem dimensoes do panel
@@ -705,7 +705,7 @@ public class GarticJFrame extends javax.swing.JFrame {
             g.drawLine(acaoMouse.x, acaoMouse.y, pontoAtual.x, pontoAtual.y);
             envioMsg("Pixel:" + acaoMouse.x + ";" + acaoMouse.y + ";" + pontoAtual.x + ";" + pontoAtual.y
                     + "@" + corAtual.getRed() + ";" + corAtual.getGreen() + ";" + corAtual.getBlue());
-            
+
             acaoMouse = pontoAtual;
         }
     }//GEN-LAST:event_jPanelDesenhoMouseDragged
@@ -785,12 +785,12 @@ public class GarticJFrame extends javax.swing.JFrame {
     public static void main(String args[]) throws UnsupportedLookAndFeelException {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            
+
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(GarticJFrame.class
                     .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        
+
         java.awt.EventQueue.invokeLater(() -> {
             new GarticJFrame().setVisible(true);
         });
