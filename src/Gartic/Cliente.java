@@ -33,4 +33,9 @@ public class Cliente {
     public void setPontos(int pontos) {
         this.pontos = pontos;
     }
+
+    @Override
+    public String toString() {
+        return nick + " (" + pontos + " Pts),";
+    }
 }

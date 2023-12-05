@@ -20,6 +20,7 @@ public class Servidor {
     private ArrayList<Cliente> clientes = new ArrayList<>();
     private ArrayList<Cliente> acertouResposta = new ArrayList<>();
     private ArrayList<String> dica = new ArrayList<>();
+    private ArrayList<Desenho> listaPixeis = new ArrayList<>();
     private String dicaCliente = "";
     private String temaTurno = "";
     private boolean jogoIniciado = false;
@@ -38,7 +39,7 @@ public class Servidor {
         StringBuilder listaClientes = new StringBuilder("ListaClientes:");
         for (Cliente c : clientesTemp) {
             if (c.getNick() != null) {
-                listaClientes.append(c.getNick()).append(" (").append(c.getPontos()).append(" Pts),");
+                listaClientes.append(c.toString());
             }
         }
 
@@ -56,7 +57,6 @@ public class Servidor {
                     break;
                 }
             }
-
             if (clienteRemover != null) {
                 clientes.remove(clienteRemover);
                 System.out.println("Cliente removido: " + clienteRemover.getNick());
@@ -67,16 +67,28 @@ public class Servidor {
 
     private void verificaResposta(Cliente remetente, String resposta) {
         if (resposta.equalsIgnoreCase(temaTurno) && !acertouResposta.contains(remetente)) {
+            String resultado = "";
             //se a resposta esta correta, pontua o cliente            
             remetente.setPontos(dicaOn ? remetente.getPontos() + 5 : remetente.getPontos() + 10);
             acertouResposta.add(remetente);
-            //envia o comando para o remetente indicando que acertou a resposta
-            enviaMsg(remetente.getSocket(), "Resposta: " + "Correto");
-            atualizaListaClientes();
-            //envia o comando para todos os clientes informando que o remetente acertou a resposta
-            for (Cliente c : clientes) {
-                enviaMsg(c.getSocket(), "Resposta: " + remetente.getNick() + " acertou a resposta!");
+            if (remetente.getPontos() >= 100) {
+                resultado = "Venceu";
+                //envia o comando para todos os clientes informando que o remetente acertou a resposta
+                for (Cliente c : clientes) {
+                    enviaMsg(c.getSocket(), "Resposta: " + remetente.getNick() + " venceu o jogo!!");
+                    enviaMsg(c.getSocket(), "JogoEncerrado:");
+                }
+                jogoIniciado = false;
+            } else {
+                resultado = "Correto";
+                //envia o comando para todos os clientes informando que o remetente acertou a resposta
+                for (Cliente c : clientes) {
+                    enviaMsg(c.getSocket(), "Resposta: " + remetente.getNick() + " acertou a resposta!");
+                }
             }
+            //envia o comando para o remetente indicando que acertou a resposta
+            enviaMsg(remetente.getSocket(), "Resposta: " + resultado);
+            atualizaListaClientes();
         } else {
             //se a resposta esta incorreta, envia o conteudo da tentativa para todos clientes            
             for (Cliente c : clientes) {
@@ -99,7 +111,9 @@ public class Servidor {
                 adicionaNovoCliente(argumento, clientSocket);
                 break;
             case "TempoEsgotado":
-                proximoTurno();
+                if (jogoIniciado) {
+                    proximoTurno();
+                }
                 dicaOn = false;
                 break;
             case "Resposta":
@@ -133,7 +147,25 @@ public class Servidor {
                 }
                 break;
             case "Pixel":
-                //fazer
+                //Pixel:9;9;9;9@9;9;9
+                String[] dadosMsg = argumento.split(":");
+                String[] dadosPosicao = dadosMsg[0].split("@");
+                String[] dadosPixel = dadosPosicao[0].split(";");
+                String[] dadosCor = dadosPosicao[1].split(";");
+
+                int x1 = Integer.parseInt(dadosPixel[0]);
+                int y1 = Integer.parseInt(dadosPixel[1]);
+                int x2 = Integer.parseInt(dadosPixel[2]);
+                int y2 = Integer.parseInt(dadosPixel[3]);
+
+                int red = Integer.parseInt(dadosCor[0]);
+                int green = Integer.parseInt(dadosCor[1]);
+                int blue = Integer.parseInt(dadosCor[2]);
+                Desenho d = new Desenho(x1, y1, x2, y2, red, green, blue);
+                listaPixeis.addAll(d.adicionaPixelLista(d));
+                for (Cliente c : clientes) {
+                    enviaMsg(c.getSocket(), "Pixel:" + d.toString());
+                }
                 break;
             case "Dica":
                 dicaOn = true;
@@ -154,6 +186,12 @@ public class Servidor {
             clientes.add(cli);
             System.out.println("Novo cliente adicionado: " + cli.getNick());
             atualizaListaClientes();
+            if (!listaPixeis.isEmpty()) {
+                String mensagemPixeis = "ListaPixel:";
+                for (Desenho pixel : listaPixeis) {
+                    enviaMsg(clientSocket, mensagemPixeis + pixel.toString());
+                }
+            }
         }
     }
 
@@ -163,7 +201,7 @@ public class Servidor {
             System.out.println("MSG ENVIADA AO CLIENTE " + clientSocket.getInetAddress() + ":" + clientSocket.getPort() + ": " + msg);
             out.println(msg);
         } catch (IOException ex) {
-            ex.printStackTrace();
+            System.out.println("ERRO: " + ex.getMessage());
         }
     }
 
@@ -171,16 +209,17 @@ public class Servidor {
         turno = (turno + 1) % clientes.size();
         acertouResposta.clear();
         dica.clear();
+        listaPixeis.clear();
         dicaCliente = "";
         //escolhe um novo tema para o turno
         temaTurno = utils.sortearPalavra();
         System.out.println("NOVO TURNO: " + turno + "TEMA ESCOLHIDO: " + temaTurno);
         for (int i = 0; i < clientes.size(); i++) {
             Cliente cliente = clientes.get(i);
-            if (i == turno) {
-                enviaMsg(cliente.getSocket(), "SeuTurno:" + temaTurno);
-            } else {
+            if (i != turno) {
                 enviaMsg(cliente.getSocket(), "AguardeSeuTurno:");
+            } else {
+                enviaMsg(cliente.getSocket(), "SeuTurno:" + temaTurno);
             }
         }
     }
@@ -218,7 +257,7 @@ public class Servidor {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("ERRO: " + e.getMessage());
         }
     }
 
@@ -232,7 +271,7 @@ public class Servidor {
             } catch (SocketException e) {
                 removerCliente(clientSocket);
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("ERRO: " + e.getMessage());
             }
         }
     }
