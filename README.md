@@ -30,7 +30,7 @@ Cada turno é sorteada uma palavra ao jogador da fila e este desenha enquanto os
 
 ## Demonstração de telas
 ![Tela de Inicio](/imagenstela/telainicio.png)
-![Tela do Jogo](/imagenstela/telainicio.png)
+![Tela do Jogo](/imagenstela/gartic.png)
 
 ## Autores
 [Douglas Kihara](https://github.com/Kenjix/)
