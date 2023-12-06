@@ -156,20 +156,13 @@ public class GarticJFrame extends javax.swing.JFrame {
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        System.out.println("Action performed");
-
-                        if (!((Timer) e.getSource()).isRunning()) {
-                            System.out.println("Timer stopped");
-                            return;
-                        }
-
                         int percentual = (int) ((double) tempoRestante / TEMPO_TOTAL_SEGUNDOS * 100);
                         jProgressBarTempo.setValue(percentual);
                         jLabelTempo.setForeground((tempoRestante > 30) ? Color.decode("#008000") : Color.decode("#f0be00"));
                         jLabelTempo.setText(tempoRestante + "s");
 
                         if (tempoRestante <= 0) {
-                            ((Timer) e.getSource()).stop();
+                            ((Timer) e.getSource()).stop(); //para o timer quando o tempo acabar
                             jProgressBarTempo.setValue(0);
                             jLabelTempo.setForeground(Color.decode("#8b0000"));
                             jLabelTempo.setText("TEMPO ESGOTADO");
