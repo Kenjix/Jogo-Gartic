@@ -72,8 +72,10 @@ public class Servidor {
                 remetente.setPontos(remetente.getPontos() + 15);
             } else if (dica == 1) {
                 remetente.setPontos(remetente.getPontos() + 10);
-            } else if (dica >= 2) {
+            } else if (dica > 1 && dica < temaTurno.length()) {
                 remetente.setPontos(remetente.getPontos() + 3);
+            } else {
+                remetente.setPontos(remetente.getPontos() + 1);
             }
             acertouResposta.add(remetente);
             if (remetente.getPontos() >= 100) {
@@ -94,9 +96,6 @@ public class Servidor {
             //envia o comando para o remetente indicando que acertou a resposta
             enviaMsg(remetente.getSocket(), "Resposta: " + resultado);
             atualizaListaClientes();
-            if (acertouResposta.size() == clientes.size() - 1) {
-                proximoTurno();
-            }
         } else {
             //se a resposta esta incorreta, envia o conteudo da tentativa para todos clientes            
             for (Cliente c : clientes) {
@@ -262,11 +261,9 @@ public class Servidor {
                 System.out.println("Conexão aceita de " + clientSocket.getInetAddress());
 
                 new Thread(() -> clienteThread(clientSocket)).start();
-
+                boolean novoCliente = false;
                 synchronized (Servidor.class) {
-                    if (!jogoIniciado
-                            && clientes.size()
-                            > 0) {
+                    if (!jogoIniciado && clientes.size() > 0) {
                         for (Cliente cliente : clientes) {
                             enviaMsg(cliente.getSocket(), "InicioJogo:");
                         }
@@ -275,6 +272,11 @@ public class Servidor {
                         proximoTurno();
                     } else {
                         enviaMsg(clientSocket, "AguardandoPlayers:");
+                        novoCliente = true;
+                    }
+
+                    if (novoCliente && clientes.size() > 1) {
+                        enviaMsg(clientSocket, "InicioJogo:");
                     }
                 }
             }

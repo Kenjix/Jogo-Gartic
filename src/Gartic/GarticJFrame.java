@@ -32,6 +32,7 @@ public class GarticJFrame extends javax.swing.JFrame {
     private final int INTERVALO_ATUALIZACAO_MILISSEGUNDOS = 1000;
     private final int TEMPO_TOTAL_SEGUNDOS = 60;
     private int larguraLinha;
+    private Timer timer;
 
     /**
      * Creates new form GarticJFrame
@@ -43,7 +44,7 @@ public class GarticJFrame extends javax.swing.JFrame {
             this.out = new PrintWriter(socket.getOutputStream(), true);
             envioMsg("NovoCliente:" + nick);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("ERRO: " + e.getMessage());
         }
         jPanelDesenho.setEnabled(false);
         jPanelDesenho.setBackground(Color.white);
@@ -52,11 +53,17 @@ public class GarticJFrame extends javax.swing.JFrame {
         jTextAreaRespostas.setEnabled(false);
         jButtonDica.setEnabled(false);
         jProgressBarTempo.setVisible(false);
+        jTextFieldChat.setEnabled(true);
         jTextFieldChat.setForeground(Color.decode("#bdbdbd"));
+        jTextFieldChat.setText("Converse aqui");
         jTextFieldResposta1.setForeground(Color.decode("#bdbdbd"));
+        jTextFieldResposta1.setEnabled(true);
+        jTextFieldResposta1.setText("Digite sua resposta");
         jTextAreaPlayers.setLineWrap(true);
         jTextAreaPlayers.setWrapStyleWord(true);
         jComboBoxLinha.setSelectedIndex(2);
+        jLabelStatus.setText("Adivinhe o desenho!");
+
         initChatListeners();
         initServerListener();
     }
@@ -126,7 +133,8 @@ public class GarticJFrame extends javax.swing.JFrame {
                 jTextFieldResposta1.setEnabled(false);
                 break;
             case "InicioJogo":
-                jLabelStatus.setText("Aguarde seu turno");
+                jLabelStatus.setText("Adivinhe o desenho!");
+                jTextFieldResposta1.setEnabled(true);
                 break;
             case "SeuTurno":
                 turnoDoJogador = true;
@@ -143,18 +151,25 @@ public class GarticJFrame extends javax.swing.JFrame {
                 //habilita a barra de progresso e inicia a contagem regressiva
                 jProgressBarTempo.setVisible(true);
                 jProgressBarTempo.setValue(100); //configura inicialmente para 100%
-                Timer timer = new Timer(INTERVALO_ATUALIZACAO_MILISSEGUNDOS, new ActionListener() {
+                timer = new Timer(INTERVALO_ATUALIZACAO_MILISSEGUNDOS, new ActionListener() {
                     int tempoRestante = TEMPO_TOTAL_SEGUNDOS;
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
+                        System.out.println("Action performed");
+
+                        if (!((Timer) e.getSource()).isRunning()) {
+                            System.out.println("Timer stopped");
+                            return;
+                        }
+
                         int percentual = (int) ((double) tempoRestante / TEMPO_TOTAL_SEGUNDOS * 100);
                         jProgressBarTempo.setValue(percentual);
                         jLabelTempo.setForeground((tempoRestante > 30) ? Color.decode("#008000") : Color.decode("#f0be00"));
                         jLabelTempo.setText(tempoRestante + "s");
 
                         if (tempoRestante <= 0) {
-                            ((Timer) e.getSource()).stop(); //para o timer quando o tempo acabar
+                            ((Timer) e.getSource()).stop();
                             jProgressBarTempo.setValue(0);
                             jLabelTempo.setForeground(Color.decode("#8b0000"));
                             jLabelTempo.setText("TEMPO ESGOTADO");
@@ -169,9 +184,12 @@ public class GarticJFrame extends javax.swing.JFrame {
                 turnoDoJogador = false;
                 apagarDesenho();
                 jTextFieldResposta1.setEnabled(true);
+                jTextFieldResposta1.setForeground(Color.decode("#bdbdbd"));
+                jTextFieldResposta1.setText("Digite sua resposta");
                 jLabelStatus.setText("Adivinhe o desenho!");
                 jTextAreaRespostas.setText("");
                 jLabelTemaDica.setText("");
+                jLabelDica.setText("");
                 jProgressBarTempo.setVisible(false);
                 jLabelTempo.setText("");
                 jButtonDica.setEnabled(false);
