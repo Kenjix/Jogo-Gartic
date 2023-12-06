@@ -102,6 +102,14 @@ public class Servidor {
                 enviaMsg(c.getSocket(), "Resposta: " + remetente.getNick() + ":" + resposta);
             }
         }
+        if (acertouResposta.size() == clientes.size() - 1) {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                System.out.println("ERRO:" + e.getMessage());
+            }
+            proximoTurno();
+        }
     }
 
     private void processaMsgCliente(String msg, Socket clientSocket) {

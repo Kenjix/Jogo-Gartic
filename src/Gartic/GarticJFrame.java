@@ -174,6 +174,9 @@ public class GarticJFrame extends javax.swing.JFrame {
                 timer.start(); //inicia o timer
                 break;
             case "AguardeSeuTurno":
+                if(timer != null & timer.isRunning()){
+                    timer.stop();                    
+                }
                 turnoDoJogador = false;
                 apagarDesenho();
                 jTextFieldResposta1.setEnabled(true);
