@@ -29,8 +29,8 @@ Cada turno é sorteada uma palavra ao jogador da fila e este desenha enquanto os
 - Componentes da Interface Gráfica do Java
 
 ## Demonstração de telas
-![Tela de Inicio](<img src="/imagenstela/telainicio.png">)
-![Tela do Jogo](<img src="/imagenstela/telainicio.png">)
+![Tela de Inicio](/imagenstela/telainicio.png)
+![Tela do Jogo](/imagenstela/telainicio.png)
 
 ## Autores
 [Douglas Kihara](https://github.com/Kenjix/)
